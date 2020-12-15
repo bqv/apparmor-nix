@@ -52,13 +52,15 @@ let
     substituteInPlace ./common/Make.rules --replace "/usr/share/man" "share/man"
   '';
 
-  patches = stdenv.lib.optionals stdenv.hostPlatform.isMusl [
+  patches = [
+    ./fix-build-failure-in-apparmor.patch
+  ] ++ stdenv.lib.optionals stdenv.hostPlatform.isMusl [
     (fetchpatch {
       url = "https://git.alpinelinux.org/aports/plain/testing/apparmor/0003-Added-missing-typedef-definitions-on-parser.patch?id=74b8427cc21f04e32030d047ae92caa618105b53";
       name = "0003-Added-missing-typedef-definitions-on-parser.patch";
       sha256 = "0yyaqz8jlmn1bm37arggprqz0njb4lhjni2d9c8qfqj0kll0bam0";
     })
-    ];
+  ];
 
   # Set to `true` after the next FIXME gets fixed or this gets some
   # common derivation infra. Too much copy-paste to fix one by one.

@@ -1,7 +1,7 @@
 {
   description = "Alternative apparmor nixos infrastructure flake";
 
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/8585991bfb629edda1e42c191bef935d9d70d690";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
   outputs = { self, nixpkgs }: let
 
@@ -45,7 +45,7 @@
     overlays.iputils = final: prev: { inherit (self.packages.${final.system}) iputils; };
     overlays.inetutils = final: prev: { inherit (self.packages.${final.system}) inetutils; };
 
-    overlay = nixpkgs.lib.composeManyExtensions (builtins.attrValues self.overlays);
+    overlay = final: prev: nixpkgs.lib.composeManyExtensions (builtins.attrValues self.overlays) final prev;
 
     packages = nixpkgs.lib.genAttrs ["x86_64-linux" "i686-linux" "aarch64-linux"] (system: let
       pkgs = nixpkgs.legacyPackages.${system};
@@ -62,6 +62,13 @@
       inetutils = pkgs.callPackage ./pkgs/tools/networking/inetutils {
         inherit (local) apparmorRulesFromClosure;
       };
+    });
+
+    checks = nixpkgs.lib.genAttrs ["x86_64-linux" "i686-linux" "aarch64-linux"] (system: {
+      inherit (import nixpkgs {
+        inherit system;
+        overlays = [ self.overlay ];
+      }) apparmor-utils apparmor-bin-utils apparmor-parser apparmor-pam apparmor-profiles apparmor-kernel-patches;
     });
 
   };
